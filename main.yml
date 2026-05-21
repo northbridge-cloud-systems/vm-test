@@ -1,0 +1,36 @@
+name: Mac-Sonoma-VNC-2026
+on: workflow_dispatch
+
+jobs:
+  run-mac:
+    runs-on: macos-26-xlarge
+    steps:
+      - name: Setup Remote Management & Fix TCC
+        run: |
+          sudo sysadminctl -addUser vncuser -fullName "VNC User" -password "Password123" -admin
+          
+          TIMESTAMP=$(date +%s)
+          DB_PATH="/Library/Application Support/com.apple.TCC/TCC.db"
+          # Granting permissions to the specific Sonoma agents
+          sudo sqlite3 "$DB_PATH" "INSERT OR REPLACE INTO access VALUES('kTCCServiceScreenCapture','com.apple.screensharing.agent',0,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,${TIMESTAMP},0,0,NULL,NULL);"
+          sudo sqlite3 "$DB_PATH" "INSERT OR REPLACE INTO access VALUES('kTCCServiceAccessibility','com.apple.screensharing.agent',0,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,${TIMESTAMP},0,0,NULL,NULL);"
+
+          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
+            -activate -configure -access -on \
+            -clientopts -setvnclegacy -vnclegacy yes \
+            -clientopts -setvncpw -vncpw Password123 \
+            -restart -agent -privs -all
+
+          sudo defaults write /Library/Preferences/com.apple.RemoteManagement.plist ShowScreenObservationBanner -bool false
+
+      - name: Install & Run Tailscale
+        run: |
+          brew install tailscale
+          sudo /opt/homebrew/bin/tailscaled --tun=userspace-networking &
+          sleep 5
+          
+          sudo /opt/homebrew/bin/tailscale up --authkey=tskey-auth-kRAAS3BZfX11CNTRL-5263jxJh5c551juEQv81c5ZXq6YxjgaL --hostname=github-mac-sonoma
+          
+          /opt/homebrew/bin/tailscale ip -4
+          
+          while true; do echo "Status: Connected at $(date)"; sleep 60; done
