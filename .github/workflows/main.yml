@@ -7,7 +7,7 @@ jobs:
     steps:
       - name: Setup Remote Management & Fix TCC
         run: |
-          sudo sysadminctl -addUser vncuser -fullName "VNC User" -password "Password123" -admin
+          sudo sysadminctl -addUser vncuser -fullName "VNC User" -password "password123" -admin
           
           TIMESTAMP=$(date +%s)
           DB_PATH="/Library/Application Support/com.apple.TCC/TCC.db"
