@@ -29,7 +29,7 @@ jobs:
           sudo /opt/homebrew/bin/tailscaled --tun=userspace-networking &
           sleep 5
           
-          sudo /opt/homebrew/bin/tailscale up --authkey=tskey-auth-kRAAS3BZfX11CNTRL-5263jxJh5c551juEQv81c5ZXq6YxjgaL --hostname=github-mac-sonoma
+          sudo /opt/homebrew/bin/tailscale up --authkey=tskey-auth-kHACCqyfj211CNTRL-psA1FTBCBqaQ6jzaMqf6qaXWzMv9adNC --hostname=github-mac-sonoma
           
           /opt/homebrew/bin/tailscale ip -4
           
