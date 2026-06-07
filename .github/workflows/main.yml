@@ -3,7 +3,7 @@ on: workflow_dispatch
 
 jobs:
   run-mac:
-    runs-on: macos-26-xlarge
+    runs-on: macos-26
     steps:
       - name: Setup Remote Management & Fix TCC
         run: |
