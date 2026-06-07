@@ -1,46 +1,36 @@
-name: Mac-Ventura-VNC-M1
+name: Mac-Sonoma-VNC-2026
 on: workflow_dispatch
 
 jobs:
   run-mac:
-    # Set to your specific M1/arm64 macOS 13 runner label
-    runs-on: macos-13
+    runs-on: macos-26
     steps:
       - name: Setup Remote Management & Fix TCC
         run: |
-          # Create an administrative user for VNC interaction
-          sudo sysadminctl -addUser vncuser -fullName "VNC User" -password "Password123!" -admin
+          sudo sysadminctl -addUser vncuser -fullName "VNC User" -password "password123" -admin
           
           TIMESTAMP=$(date +%s)
           DB_PATH="/Library/Application Support/com.apple.TCC/TCC.db"
-          
-          # Injecting exact 17-column schema compatibility for macOS 13 (Ventura)
-          sudo sqlite3 "$DB_PATH" "INSERT OR REPLACE INTO access VALUES('kTCCServiceScreenCapture','com.apple.screensharing.agent',0,2,3,1,NULL,NULL,0,'UNUSED',NULL,0,${TIMESTAMP},NULL,NULL,NULL,0);"
-          sudo sqlite3 "$DB_PATH" "INSERT OR REPLACE INTO access VALUES('kTCCServiceAccessibility','com.apple.screensharing.agent',0,2,3,1,NULL,NULL,0,'UNUSED',NULL,0,${TIMESTAMP},NULL,NULL,NULL,0);"
+          # Granting permissions to the specific Sonoma agents
+          sudo sqlite3 "$DB_PATH" "INSERT OR REPLACE INTO access VALUES('kTCCServiceScreenCapture','com.apple.screensharing.agent',0,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,${TIMESTAMP},0,0,NULL,NULL);"
+          sudo sqlite3 "$DB_PATH" "INSERT OR REPLACE INTO access VALUES('kTCCServiceAccessibility','com.apple.screensharing.agent',0,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,${TIMESTAMP},0,0,NULL,NULL);"
 
-          # Fire up the Apple Remote Management (ARD) / VNC Agent legacy interface
           sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
             -activate -configure -access -on \
             -clientopts -setvnclegacy -vnclegacy yes \
-            -clientopts -setvncpw -vncpw Password123! \
+            -clientopts -setvncpw -vncpw Password123 \
             -restart -agent -privs -all
 
-          # Suppress the persistent "Screen is being observed" banner overlay
           sudo defaults write /Library/Preferences/com.apple.RemoteManagement.plist ShowScreenObservationBanner -bool false
 
       - name: Install & Run Tailscale
         run: |
           brew install tailscale
-          
-          # Start tailscaled background daemon utilizing userspace networking
           sudo /opt/homebrew/bin/tailscaled --tun=userspace-networking &
           sleep 5
           
-          # Authenticating onto your Tailnet using the plaintext key
-          sudo /opt/homebrew/bin/tailscale up --authkey=tskey-auth-kHACCqyfj211CNTRL-psA1FTBCBqaQ6jzaMqf6qaXWzMv9adNC --hostname=github-mac-m1-ventura
+          sudo /opt/homebrew/bin/tailscale up --authkey=tskey-auth-kHACCqyfj211CNTRL-psA1FTBCBqaQ6jzaMqf6qaXWzMv9adNC --hostname=github-mac-sonoma
           
-          # Print the target IPv4 address for your VNC connection client
           /opt/homebrew/bin/tailscale ip -4
           
-          # Prevent runner environment from immediately tearing down
           while true; do echo "Status: Connected at $(date)"; sleep 60; done
