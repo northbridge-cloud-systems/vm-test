@@ -4,7 +4,7 @@ on: workflow_dispatch
 jobs:
   run-mac:
     # Set to your specific M1/arm64 macOS 13 runner label
-    runs-on: macos-13-xlarge
+    runs-on: macos-13
     steps:
       - name: Setup Remote Management & Fix TCC
         run: |
